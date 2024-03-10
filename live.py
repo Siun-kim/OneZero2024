@@ -5,9 +5,11 @@ import pickle
 from pathlib import Path
 
 from gtts import gTTS
-from playsound import playsound
+import pygame
 import os
 import tempfile
+pygame.mixer.init()
+
 
 def load_known_encodings(encodings_location):
     with open(encodings_location, 'rb') as f:
@@ -25,7 +27,10 @@ def speak_names(names):
         tts = gTTS(text)
         tts.write_to_fp(temp_audio)
     temp_audio_path = temp_audio.name
-    playsound(temp_audio_path)
+    pygame.mixer.music.load(temp_audio_path)
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy() == True:
+        continue
     os.remove(temp_audio_path)
 
 known_face_encodings, known_face_names = load_known_encodings(Path("output/encodings.pkl"))
@@ -46,7 +51,7 @@ while True:
     small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
 
     # BGR to RGB
-    rgb_small_frame = small_frame[:, :, ::-1]
+    rgb_small_frame = np.array(small_frame[:, :, ::-1])
     
     face_locations = face_recognition.face_locations(rgb_small_frame)
     face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)

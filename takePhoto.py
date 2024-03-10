@@ -7,6 +7,20 @@ import numpy as np
 from playsound import playsound
 from gtts import gTTS
 import tempfile
+import pygame
+import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
+
+button_pressed = False
+def button_callback(channel):
+    global button_pressed
+    button_pressed = True
+
+pygame.mixer.init()
+GPIO.setwarnings(False) # Ignore warning for now
+GPIO.setmode(GPIO.BOARD) # Use physical pin numbering
+GPIO.setup(10, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # Set pin 10 to be an input pin and set initial value to be pulled low (off)
+GPIO.add_event_detect(10,GPIO.RISING,callback=button_callback) # Setup event on pin 10 rising edge
+
 
 fps = 44100
 duration = 3
@@ -16,9 +30,14 @@ def speak(text):
         tts = gTTS(text)
         tts.write_to_fp(temp_audio)
     temp_audio_path = temp_audio.name
-    playsound(temp_audio_path)
+    #playsound(temp_audio_path)
+    pygame.mixer.music.load(temp_audio_path)
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy() == True:
+        continue
     os.remove(temp_audio_path)
 
+'''
 def verify_name(name):
     speak(f"Is the name {name} correct? Please answer in yes or no.")
     print("Verifying name...")
@@ -76,16 +95,17 @@ def get_name():
         print("Could not request results from Google Speech Recognition service:", e)
         speak("Sorry, there was an error. Please try again.")
         return None
-
+'''
 # Main code
-name = None
+name = input("Enter name of the person: ")
 
+'''
 while not name:
     name = get_name()
     if name:
         if not verify_name(name):
             name = None
-
+'''
 if name:
     speak(f"Ready to take pictures of {name}.")
 
@@ -115,8 +135,9 @@ while True:
         # ESC pressed
         print("Exciting...")
         break
-    elif k%256 == 32:
-        # SPACE pressed
+    elif k%256 == 32 or button_pressed == True:
+        # SPACE or button pressed
+        button_pressed = False
         img_name = "{}/{}_{}.jpg".format(dataset_dir, name, img_counter)
         cv2.imwrite(img_name, frame)
         print("{} written!".format(img_name))
