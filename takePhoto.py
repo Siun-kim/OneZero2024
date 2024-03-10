@@ -1,6 +1,6 @@
 import cv2
 import os
-
+import subprocess
 import speech_recognition as sr
 import sounddevice as sd
 import numpy as np
@@ -124,3 +124,5 @@ while True:
 
 cam.release()
 cv2.destroyAllWindows()
+
+subprocess.run(["python", "encode.py"])
