@@ -1,6 +1,7 @@
 import cv2
 import os
-name = 'Si Un'
+
+name = 'Dyllan'
 
 dataset_dir = "train/" + name
 os.makedirs(dataset_dir, exist_ok=True)

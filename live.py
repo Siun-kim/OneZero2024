@@ -4,10 +4,29 @@ import numpy as np
 import pickle
 from pathlib import Path
 
+from gtts import gTTS
+from playsound import playsound
+import os
+import tempfile
+
 def load_known_encodings(encodings_location):
     with open(encodings_location, 'rb') as f:
         known_encodings = pickle.load(f)
     return known_encodings['encodings'], known_encodings['names']
+
+def speak_names(names):
+    if len(names) == 1:
+        text = f"{names[0]} is in front of you."
+    elif len(names) == 2:
+        text = f"{names[0]} and {names[1]} are in front of you."
+    else:
+        text = ", ".join(names[:-1]) + f", and {names[-1]} are in front of you."
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_audio:
+        tts = gTTS(text)
+        tts.write_to_fp(temp_audio)
+    temp_audio_path = temp_audio.name
+    playsound(temp_audio_path)
+    os.remove(temp_audio_path)
 
 known_face_encodings, known_face_names = load_known_encodings(Path("output/encodings.pkl"))
 
@@ -15,10 +34,11 @@ face_locations = []
 face_encodings = []
 face_names = []
 process_this_frame = True
+trigger_pressed = False
 
 video_capture = cv2.VideoCapture(0)
 distance_threshold = 0.35
-testc = 0
+
 while True:
     ret, frame = video_capture.read()
 
@@ -35,21 +55,20 @@ while True:
     
     for face_encoding in face_encodings:
         matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-        name = "Unknown"
+        name = "A stranger"
 
         face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
-        if testc == 0:
-                print(face_distances)
-                testc += 1
+    
         if np.any(face_distances <= distance_threshold):
             
             best_match_index = np.argmin(face_distances)
             if matches[best_match_index]:
                 name = known_face_names[best_match_index]
         else:
-            name = "Unknown"
+            name = "A stranger"
 
         face_names.append(name)
+
 
     for (top, right, bottom, left), name in zip(face_locations, face_names):
         # Scale back up face locs
@@ -65,9 +84,18 @@ while True:
 
     cv2.imshow('Video', frame)
 
-    # 'q' to quit
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+    key = cv2.waitKey(1)
+    if key & 0xFF == ord(' '):
+        trigger_pressed = True
 
+    if trigger_pressed:
+        sorted_face_names = [name for _, name in sorted(zip([left for _, _, _, left in face_locations], face_names))]
+        speak_names(sorted_face_names)
+        trigger_pressed = False
+
+    # 'q' to quit
+    if key & 0xFF == ord('q'):
+        break
+    
 video_capture.release()
 cv2.destroyAllWindows()
