@@ -2,6 +2,8 @@
 
 Recogneyes addresses the challenges faced by visually impaired individuals when trying to recognize faces. It aims to support individuals facing challenges in social interactions or name recall by enhancing memory recall and helping maintain meaningful connections.
 
+This project was made in under 24 hours as part of Cornell's 2024 BigRed//Makeathon and won 2nd Best Overall.
+
 Check out our slides: [link](https://github.com/anniesiun/OneZero2024/blob/main/Sp2024%20Hackathon%20-%20RecognEyes.pdf) 
 
 ## Purpose
